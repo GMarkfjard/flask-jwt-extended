@@ -1,46 +1,126 @@
 import datetime
 from flask import current_app
 
-# Defaults
-
-# Authorize header type, what we are expecting to see in the auth header
-AUTH_HEADER = 'Bearer'
-
-# How long an access token will live before it expires.
-ACCESS_TOKEN_EXPIRES = datetime.timedelta(minutes=15)
-
-# How long the refresh token will live before it expires
-REFRESH_TOKEN_EXPIRES = datetime.timedelta(days=30)
-
-# What algorithm to use to sign the token. See here for a list of options:
-# https://github.com/jpadilla/pyjwt/blob/master/jwt/api_jwt.py
-ALGORITHM = 'HS256'
-
-# Blacklist enabled
-BLACKLIST_ENABLED = False
-
+# TODO move this to the docs
 # blacklist storage options (simplekv). If using a storage option that supports
 # the simplekv.TimeToLiveMixin (example: redis, memcached), the TTL will be
 # automatically set to 15 minutes after the token expires (to account for
 # clock drift between different jwt providers/consumers).
 #
 # See: http://pythonhosted.org/simplekv/index.html#simplekv.TimeToLiveMixin
-BLACKLIST_STORE = None
-
-# blacklist check requests. Possible values are all and refresh
-BLACKLIST_TOKEN_CHECKS = 'refresh'
 
 
-def get_auth_header():
-    return current_app.config.get('JWT_AUTH_HEADER', AUTH_HEADER)
+# TODO support for cookies and headers at the same time. This could be useful
+#      for using cookies in a web browser (more secure), and headers in a mobile
+#      app (don't have to worry about csrf/xss there, and headers are easier to
+#      manage in that environment)
+
+# Where to look for the JWT. Available options are cookie, header, and either
+TOKEN_LOCATION = 'headers'
+
+# Options for JWTs when the TOKEN_LOCATION is headers
+HEADER_NAME = 'Authorization'
+HEADER_TYPE = 'Bearer'
+
+# Option for JWTs when the TOKEN_LOCATION is cookies
+COOKIE_SECURE = False
+ACCESS_COOKIE_NAME = 'access_token_cookie'
+REFRESH_COOKIE_NAME = 'refresh_token_cookie'
+ACCESS_COOKIE_PATH = None
+REFRESH_COOKIE_PATH = None
+
+# Options for using double submit for verifying CSRF tokens
+COOKIE_CSRF_PROTECT = True
+ACCESS_CSRF_COOKIE_NAME = 'csrf_access_token'
+REFRESH_CSRF_COOKIE_NAME = 'csrf_refresh_token'
+ACCESS_CSRF_HEADER_NAME = 'X-CSRF-ACCESS-TOKEN'
+REFRESH_CSRF_HEADER_NAME = 'X-CSRF-REFRESH-TOKEN'
+
+# How long an a token will live before they expire.
+ACCESS_TOKEN_EXPIRES = datetime.timedelta(minutes=15)
+REFRESH_TOKEN_EXPIRES = datetime.timedelta(days=30)
+
+# What algorithm to use to sign the token. See here for a list of options:
+# https://github.com/jpadilla/pyjwt/blob/master/jwt/api_jwt.py (note that
+# public private key is not yet supported)
+ALGORITHM = 'HS256'
+
+# Options for blacklisting/revoking tokens
+BLACKLIST_ENABLED = False
+BLACKLIST_STORE = None  # simplekv object: https://pypi.python.org/pypi/simplekv/
+BLACKLIST_TOKEN_CHECKS = 'refresh'  # valid options are 'all', and 'refresh'
+
+
+def get_token_location():
+    location = current_app.config.get('JWT_TOKEN_LOCATION', TOKEN_LOCATION)
+    if location not in ['headers', 'cookies']:
+        raise RuntimeError('JWT_LOCATION_LOCATION must be "headers" or "cookies"')
+    return location
+
+
+def get_jwt_header_name():
+    name = current_app.config.get('JWT_HEADER_NAME', HEADER_NAME)
+    if not name:
+        raise RuntimeError("JWT_HEADER_NAME must be set")
+    return name
+
+
+def get_cookie_secure():
+    return current_app.config.get('JWT_COOKIE_SECURE', COOKIE_SECURE)
+
+
+def get_access_cookie_name():
+    return current_app.config.get('JWT_ACCESS_COOKIE_NAME', ACCESS_COOKIE_NAME)
+
+
+def get_refresh_cookie_name():
+    return current_app.config.get('JWT_REFRESH_COOKIE_NAME', REFRESH_COOKIE_NAME)
+
+
+def get_access_cookie_path():
+    return current_app.config.get('JWT_ACCESS_COOKIE_PATH', ACCESS_COOKIE_PATH)
+
+
+def get_refresh_cookie_path():
+    return current_app.config.get('JWT_REFRESH_COOKIE_PATH', REFRESH_COOKIE_PATH)
+
+
+def get_cookie_csrf_protect():
+    return current_app.config.get('JWT_COOKIE_CSRF_PROTECT', COOKIE_CSRF_PROTECT)
+
+
+def get_access_csrf_cookie_name():
+    return current_app.config.get('JWT_ACCESS_CSRF_COOKIE_NAME', ACCESS_CSRF_COOKIE_NAME)
+
+
+def get_refresh_csrf_cookie_name():
+    return current_app.config.get('JWT_REFRESH_CSRF_COOKIE_NAME', REFRESH_CSRF_COOKIE_NAME)
+
+
+def get_access_csrf_header_name():
+    return current_app.config.get('JWT_ACCESS_CSRF_HEADER_NAME', ACCESS_CSRF_HEADER_NAME)
+
+
+def get_refresh_csrf_header_name():
+    return current_app.config.get('JWT_REFRESH_CSRF_HEADER_NAME', REFRESH_CSRF_HEADER_NAME)
+
+
+def get_jwt_header_type():
+    return current_app.config.get('JWT_HEADER_TYPE', HEADER_TYPE)
 
 
 def get_access_expires():
-    return current_app.config.get('JWT_ACCESS_TOKEN_EXPIRES', ACCESS_TOKEN_EXPIRES)
+    delta = current_app.config.get('JWT_ACCESS_TOKEN_EXPIRES', ACCESS_TOKEN_EXPIRES)
+    if not isinstance(delta, datetime.timedelta):
+        raise RuntimeError('JWT_ACCESS_TOKEN_EXPIRES must be a datetime.timedelta')
+    return delta
 
 
 def get_refresh_expires():
-    return current_app.config.get('JWT_REFRESH_TOKEN_EXPIRES', REFRESH_TOKEN_EXPIRES)
+    delta = current_app.config.get('JWT_REFRESH_TOKEN_EXPIRES', REFRESH_TOKEN_EXPIRES)
+    if not isinstance(delta, datetime.timedelta):
+        raise RuntimeError('JWT_REFRESH_TOKEN_EXPIRES must be a datetime.timedelta')
+    return delta
 
 
 def get_algorithm():
