@@ -3,30 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to flask-jwt-extended's documentation!
-==============================================
+Flask JWT Extended's documentation
+==================================
+
+In here you will find examples of how to use Flask JWT Extended. Full API
+documentation is coming soon!
 
 .. toctree::
    :maxdepth: 2
 
    installation
    basic_usage
-
    add_custom_data_claims
    refresh_tokens
    token_freshness
    changing_default_behavior
    options
    blacklist_and_token_revoking
-   testing_and_coverage
-
-   documentation
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   tokens_in_cookies
