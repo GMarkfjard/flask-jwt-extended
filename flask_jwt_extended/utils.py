@@ -312,12 +312,28 @@ def create_refresh_token(identity):
     return refresh_token
 
 
-def create_access_token(identity, fresh=True):
+def create_access_token(identity, fresh=False):
+    """
+    Creates a new access token
+
+    :param identity: The identity of this token. This can be any data that is
+                     json serializable. It can also be an object, in which case
+                     you can use the user_identity_loader to define a function
+                     that will be called to pull a json serializable identity
+                     out of this object. This is useful so you don't need to
+                     query disk twice, once for initially finding the identity
+                     in your login endpoint, and once for setting addition data
+                     in the JWT via the user_claims_loader
+    :param fresh: If this token should me markded as fresh, and can thus access
+                  fresh_jwt_required protected endpoints. Defaults to False
+    :return: A newly encoded JWT access token
+    """
     # Token options
     secret = _get_secret_key()
     access_expire_delta = get_access_expires()
     algorithm = get_algorithm()
-    user_claims = current_app.jwt_manager.user_claims_callback(identity)
+    user_claims = current_app.jwt_manager._user_claims_callback(identity)
+    identity = current_app.jwt_manager._user_identity_callback(identity)
 
     access_token = _encode_access_token(identity, secret, algorithm, access_expire_delta,
                                         fresh=fresh, user_claims=user_claims)
@@ -378,3 +394,24 @@ def set_refresh_cookies(response, encoded_refresh_token):
                             secure=get_cookie_secure(),
                             httponly=False,
                             path='/')
+
+
+def unset_jwt_cookies(response):
+    """
+    Takes a flask response object, and configures it to unset (delete) the JWT
+    cookies. Basically, this is a logout helper method if using cookies to store
+    the JWT
+    """
+    response.set_cookie(get_refresh_cookie_name(),
+                        value='',
+                        expires=0,
+                        secure=get_cookie_secure(),
+                        httponly=True,
+                        path=get_refresh_cookie_path())
+    response.set_cookie(get_access_cookie_name(),
+                        value='',
+                        expires=0,
+                        secure=get_cookie_secure(),
+                        httponly=True,
+                        path=get_access_cookie_path())
+    return response
