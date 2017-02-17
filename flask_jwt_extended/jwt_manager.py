@@ -98,9 +98,9 @@ class JWTManager:
 
     def user_identity_loader(self, callback):
         """
-        This sets the callback method for adding custom user claims to a JWT.
+        This sets the callback method for adding custom identities claims to a JWT.
 
-        By default, no extra user claims will be added to the JWT.
+        By default, no extra user identities will be added to the JWT.
 
         Callback must be a function that takes only one argument, which is the
         identity of the JWT being created.
